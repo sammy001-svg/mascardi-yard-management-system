@@ -146,19 +146,43 @@ function render(container) {
             }
             .utilization-grid {
                 display: grid;
-                grid-template-columns: repeat(10, 1fr);
-                gap: 8px;
-                margin-top: 24px;
+                grid-template-columns: repeat(15, 1fr);
+                gap: 4px;
+                margin-top: 12px;
             }
             .util-cell {
                 aspect-ratio: 1;
+                border-radius: 2px;
+                background: var(--bg-tertiary);
+                border: 1px solid rgba(255,255,255,0.05);
+                cursor: pointer;
+                position: relative;
+            }
+            .util-cell:hover {
+                transform: scale(1.4);
+                z-index: 10;
+                border-color: var(--accent-primary);
+                box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+            }
+            .util-cell.high { background: #ff4757; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
+            .util-cell.mid { background: #ffa502; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
+            .util-cell.low { background: #2ed573; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
+            
+            .zone-label {
+                font-size: 0.9rem;
+                font-weight: 700;
+                color: var(--text-primary);
+                margin-bottom: 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .zone-density {
+                font-size: 0.8rem;
+                padding: 2px 8px;
                 border-radius: 4px;
                 background: var(--bg-tertiary);
-                border: 1px solid var(--border-color);
             }
-            .util-cell.high { background: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.3); }
-            .util-cell.mid { background: #f39c12; }
-            .util-cell.low { background: #2ecc71; }
             
             .section-title {
                 margin-bottom: 24px;
@@ -251,14 +275,42 @@ function render(container) {
             <div class="grid" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px;">
                 <div class="card" style="padding: 32px;">
                     <h3 class="section-title">Yard Space Utilization</h3>
-                    <p class="section-desc">Heatmap of slot density by zone. High density requires immediate movement.</p>
-                    <div class="utilization-grid">
-                        ${renderHeatmapCells(100)}
+                    <p class="section-desc">Interactive heatmap of slot density by zone. Hover over cells for capacity alerts.</p>
+                    
+                    <div class="zone-block" style="margin-bottom: 32px;">
+                        <div class="zone-label">
+                            <span>Zone A - Main Imports</span>
+                            <span class="zone-density" style="color: #ff4757;">88% Critical</span>
+                        </div>
+                        <div class="utilization-grid">
+                            ${renderHeatmapCells(60, 0.85)}
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 24px; margin-top: 32px; font-size: 1rem; font-weight: 600;">
-                        <span style="display: flex; align-items: center; gap: 8px;"><div style="width: 14px; height: 14px; border-radius: 4px; background: #e74c3c; border: 1px solid rgba(0,0,0,0.1);"></div> High (80%+)</span>
-                        <span style="display: flex; align-items: center; gap: 8px;"><div style="width: 14px; height: 14px; border-radius: 4px; background: #f39c12; border: 1px solid rgba(0,0,0,0.1);"></div> Medium (50%)</span>
-                        <span style="display: flex; align-items: center; gap: 8px;"><div style="width: 14px; height: 14px; border-radius: 4px; background: #2ecc71; border: 1px solid rgba(0,0,0,0.1);"></div> Low (<30%)</span>
+
+                    <div class="zone-block" style="margin-bottom: 32px;">
+                        <div class="zone-label">
+                            <span>Zone B - Workshop Waiting</span>
+                            <span class="zone-density" style="color: #ffa502;">52% Moderate</span>
+                        </div>
+                        <div class="utilization-grid" style="grid-template-columns: repeat(12, 1fr);">
+                            ${renderHeatmapCells(36, 0.52)}
+                        </div>
+                    </div>
+
+                    <div class="zone-block">
+                        <div class="zone-label">
+                            <span>Zone C - Premium Showroom</span>
+                            <span class="zone-density" style="color: #2ed573;">24% Clear</span>
+                        </div>
+                        <div class="utilization-grid" style="grid-template-columns: repeat(10, 1fr);">
+                            ${renderHeatmapCells(20, 0.24)}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 24px; margin-top: 40px; font-size: 0.95rem; font-weight: 600; padding-top: 24px; border-top: 1px solid var(--border-color);">
+                        <span style="display: flex; align-items: center; gap: 8px;"><div style="width: 14px; height: 14px; border-radius: 4px; background: #ff4757;"></div> High (80%+)</span>
+                        <span style="display: flex; align-items: center; gap: 8px;"><div style="width: 14px; height: 14px; border-radius: 4px; background: #ffa502;"></div> Medium (50%)</span>
+                        <span style="display: flex; align-items: center; gap: 8px;"><div style="width: 14px; height: 14px; border-radius: 4px; background: #2ed573;"></div> Low (<30%)</span>
                     </div>
                 </div>
                 <div class="card" style="padding: 32px;">
@@ -351,12 +403,18 @@ function renderSourceStat(label, percent, color) {
     `;
 }
 
-function renderHeatmapCells(count) {
+function renderHeatmapCells(count, density) {
     let html = '';
     for (let i = 0; i < count; i++) {
+        // Use density to push randomness towards high/mid/low
         const rand = Math.random();
-        const type = rand > 0.8 ? 'high' : rand > 0.4 ? 'mid' : 'low';
-        html += `<div class="util-cell ${type}"></div>`;
+        const score = rand * density;
+        let type = 'low';
+        if (score > 0.45) type = 'high';
+        else if (score > 0.2) type = 'mid';
+        
+        const tooltip = type === 'high' ? 'Slot Occupied - Urgent Move' : type === 'mid' ? 'Slot Occupied' : 'Slot Available';
+        html += `<div class="util-cell ${type}" title="${tooltip}"></div>`;
     }
     return html;
 }
