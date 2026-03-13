@@ -80,6 +80,13 @@ const modules = {
       return initReports();
     }
   },
+  finance: {
+    title: "Financial Overview",
+    init: async () => {
+      const { initFinance } = await import('./modules/finance.js');
+      return initFinance();
+    }
+  },
 };
 
 // App Initialization
@@ -167,7 +174,8 @@ function getNavItems(role) {
     { id: 'inspection', icon: 'fas fa-clipboard-check', label: 'Inspections', roles: ['Admin', 'Yard'] },
     { id: 'workshop', icon: 'fas fa-tools', label: 'Workshop', roles: ['Admin', 'Yard'] },
     { id: 'keys', icon: 'fas fa-key', label: 'Key Control', roles: ['Admin', 'Yard'] },
-    { id: 'reports', icon: 'fas fa-chart-pie', label: 'Reports', roles: ['Admin', 'Sales', 'Yard'] }
+    { id: 'reports', icon: 'fas fa-chart-pie', label: 'Reports', roles: ['Admin', 'Sales', 'Yard'] },
+    { id: 'finance', icon: 'fas fa-wallet', label: 'Finance', roles: ['Admin', 'Sales'] }
   ];
 
   return allItems
